@@ -21,7 +21,7 @@ PlayOKのオセロ対戦での累計戦績を追跡するTampermonkey用のユ�
    - [Chrome Web Store](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)からTampermonkeyをインストール
 
 2. **スクリプトを追加**
-   - `playok-wins-counter.js`の内容をコピー
+   - `playok-win-counter.js`の内容をコピー
    - Tampermonkeyダッシュボードを開く
    - 「新しいスクリプトを作成」をクリック
    - コピーした内容を貼り付けて保存
