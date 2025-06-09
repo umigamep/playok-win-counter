@@ -35,7 +35,8 @@
         counterElement: null,
         lastHistoryCheck: 0,
         historyData: [],
-        drawHandling: 'normal' // 'normal', 'half_point', 'black_wins'
+        drawHandling: 'normal', // 'normal', 'half_point', 'black_wins'
+        autoRefreshInterval: null // 自動更新タイマー
     };
 
     // CSS スタイルを追加
@@ -341,6 +342,9 @@
 
             console.log('記録開始完了:', startDateTime.toLocaleString());
 
+            // 自動更新を開始
+            this.startAutoRefresh();
+            
             this.updateCounterDisplay();
             this.refreshHistory();
         }
@@ -351,6 +355,10 @@
             this.gameState.isTracking = false;
             this.gameState.trackingStartDate = null;
             GM_setValue(`${this.CONFIG.storagePrefix}is_tracking`, false);
+            
+            // 自動更新を停止
+            this.stopAutoRefresh();
+            
             this.updateCounterDisplay();
         }
 
@@ -364,6 +372,9 @@
                 this.gameState.isTracking = false;
                 this.gameState.trackingStartDate = null;
                 this.gameState.historyData = [];
+                
+                // 自動更新を停止
+                this.stopAutoRefresh();
 
                 this.updateCounterDisplay();
             }
@@ -700,6 +711,32 @@
             }
         }
 
+        // 自動更新開始
+        startAutoRefresh() {
+            // 既存のタイマーがあればクリア
+            if (this.gameState.autoRefreshInterval) {
+                clearInterval(this.gameState.autoRefreshInterval);
+            }
+            
+            console.log('自動更新開始:', this.CONFIG.historyUpdateInterval + 'ms間隔');
+            
+            this.gameState.autoRefreshInterval = setInterval(() => {
+                if (this.gameState.isTracking && this.gameState.myUsername) {
+                    console.log('自動更新実行');
+                    this.refreshHistory();
+                }
+            }, this.CONFIG.historyUpdateInterval);
+        }
+        
+        // 自動更新停止
+        stopAutoRefresh() {
+            if (this.gameState.autoRefreshInterval) {
+                console.log('自動更新停止');
+                clearInterval(this.gameState.autoRefreshInterval);
+                this.gameState.autoRefreshInterval = null;
+            }
+        }
+
         // 手動でユーザー名を設定
         setUsernameManually() {
             const username = prompt('ユーザー名を入力してください:');
@@ -729,9 +766,10 @@
             // UI表示
             this.updateCounterDisplay();
 
-            // 追跡中の場合は履歴を取得
+            // 追跡中の場合は履歴を取得し、自動更新を開始
             if (this.gameState.isTracking && this.gameState.myUsername) {
                 this.refreshHistory();
+                this.startAutoRefresh();
             }
 
             console.log('PlayOK Counter: 初期化完了');
