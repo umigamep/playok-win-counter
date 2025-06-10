@@ -353,7 +353,7 @@
         stopTracking() {
             console.log('記録停止');
             this.gameState.isTracking = false;
-            this.gameState.trackingStartDate = null;
+            // 追跡開始日時と履歴データは保持（リセット時のみクリア）
             GM_setValue(`${this.CONFIG.storagePrefix}is_tracking`, false);
             
             // 自動更新を停止
@@ -364,10 +364,11 @@
 
         // 設定リセット
         resetTracking() {
-            if (confirm('記録設定をリセットしますか？')) {
+            if (confirm('記録設定と戦績データをリセットしますか？')) {
                 console.log('設定リセット');
                 GM_setValue(`${this.CONFIG.storagePrefix}is_tracking`, false);
                 GM_setValue(`${this.CONFIG.storagePrefix}tracking_start_date`, '');
+                GM_setValue(`${this.CONFIG.storagePrefix}history_data`, JSON.stringify([]));
 
                 this.gameState.isTracking = false;
                 this.gameState.trackingStartDate = null;
@@ -475,6 +476,9 @@
             
             this.gameState.historyData = historyData;
             this.gameState.lastHistoryCheck = Date.now();
+            
+            // 履歴データを保存
+            this.saveHistoryData();
             
             console.log(`履歴解析完了: ${historyData.length}件のゲーム`);
             this.updateCounterDisplay();
@@ -614,7 +618,7 @@
                     </select>
                 </div>
 
-                ${this.gameState.isTracking && total > 0 ? `
+                ${total > 0 ? `
                     <div class="section stats">
                         <div class="period-info">${periodText}</div>
                         <div class="big-stats">
@@ -624,7 +628,7 @@
                         </div>
                         <div>勝率: ${this.calculateStats().winRate}% (${total}戦)</div>
                     </div>
-                ` : this.gameState.isTracking ? `
+                ` : this.gameState.trackingStartDate ? `
                     <div class="section stats">
                         <div class="period-info">${periodText}</div>
                         <div>まだ対戦データがありません</div>
@@ -763,6 +767,35 @@
             }
         }
 
+        // 履歴データを保存
+        saveHistoryData() {
+            try {
+                GM_setValue(`${this.CONFIG.storagePrefix}history_data`, JSON.stringify(this.gameState.historyData));
+                console.log('履歴データ保存完了:', this.gameState.historyData.length + '件');
+            } catch (error) {
+                console.error('履歴データ保存エラー:', error);
+            }
+        }
+
+        // 履歴データを読み込み
+        loadHistoryData() {
+            try {
+                const savedData = GM_getValue(`${this.CONFIG.storagePrefix}history_data`, '[]');
+                const historyData = JSON.parse(savedData);
+                
+                // 日付オブジェクトを復元
+                this.gameState.historyData = historyData.map(game => ({
+                    ...game,
+                    datetime: new Date(game.datetime)
+                }));
+                
+                console.log('履歴データ読み込み完了:', this.gameState.historyData.length + '件');
+            } catch (error) {
+                console.error('履歴データ読み込みエラー:', error);
+                this.gameState.historyData = [];
+            }
+        }
+
         // 手動でユーザー名を設定
         setUsernameManually() {
             const usernameInput = document.getElementById('username-input');
@@ -819,6 +852,9 @@
             if (startDateStr) {
                 this.gameState.trackingStartDate = new Date(startDateStr);
             }
+
+            // 保存された履歴データを読み込み
+            this.loadHistoryData();
 
             // UI表示
             this.updateCounterDisplay();
