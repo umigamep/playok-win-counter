@@ -729,11 +729,11 @@
             // Enterキーでユーザー名設定
             const usernameInput = document.getElementById('username-input');
             if (usernameInput) {
-                usernameInput.onkeypress = (e) => {
+                usernameInput.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') {
                         this.setUsernameManually();
                     }
-                };
+                });
             }
         }
 

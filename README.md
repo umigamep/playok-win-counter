@@ -48,7 +48,4 @@ PlayOKのオセロ対戦での累計戦績を追跡するTampermonkey用のユ�
 
 ## 対応サイト
 
-- `https://www.playok.com/*/reversi*`
-- `https://playok.com/*/reversi*`
-- `https://www.playok.com/*/stat.phtml*`
-- `https://playok.com/*/stat.phtml*`
+playokのオセロ: https://www.playok.com/ja/reversi/
