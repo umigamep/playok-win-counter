@@ -577,10 +577,18 @@
                 <div class="user-greeting">
                     ${userGreeting}
                     ${!this.gameState.myUsername ? `
-                        <div style="margin-top: 8px;">
-                            <button class="refresh-btn" id="set-username-btn" style="font-size: 10px; padding: 4px 8px;">ユーザー名設定</button>
+                        <div class="input-group" style="margin-top: 8px;">
+                            <label>ユーザー名:</label>
+                            <div style="display: flex; gap: 5px; align-items: center;">
+                                <input type="text" id="username-input" placeholder="ユーザー名を入力" style="flex: 1;">
+                                <button class="refresh-btn" id="set-username-btn" style="font-size: 10px; padding: 6px 8px; white-space: nowrap;">設定</button>
+                            </div>
                         </div>
-                    ` : ''}
+                    ` : `
+                        <div style="margin-top: 8px; text-align: center;">
+                            <button class="refresh-btn" id="change-username-btn" style="font-size: 10px; padding: 4px 8px;">ユーザー名変更</button>
+                        </div>
+                    `}
                 </div>
 
                 <div class="status">${statusText}</div>
@@ -709,6 +717,24 @@
                     this.setUsernameManually();
                 };
             }
+
+            const changeUsernameBtn = document.getElementById('change-username-btn');
+            if (changeUsernameBtn) {
+                changeUsernameBtn.onclick = () => {
+                    console.log('ユーザー名変更ボタンクリック');
+                    this.changeUsername();
+                };
+            }
+
+            // Enterキーでユーザー名設定
+            const usernameInput = document.getElementById('username-input');
+            if (usernameInput) {
+                usernameInput.onkeypress = (e) => {
+                    if (e.key === 'Enter') {
+                        this.setUsernameManually();
+                    }
+                };
+            }
         }
 
         // 自動更新開始
@@ -739,12 +765,43 @@
 
         // 手動でユーザー名を設定
         setUsernameManually() {
-            const username = prompt('ユーザー名を入力してください:');
+            const usernameInput = document.getElementById('username-input');
+            if (usernameInput) {
+                // 入力フィールドから取得
+                const username = usernameInput.value.trim();
+                if (username) {
+                    this.gameState.myUsername = username;
+                    GM_setValue('my_username', username);
+                    console.log('手動でユーザー名設定:', username);
+                    this.updateCounterDisplay();
+                } else {
+                    alert('ユーザー名を入力してください。');
+                }
+            } else {
+                // フォールバック: promptを使用
+                const username = prompt('ユーザー名を入力してください:');
+                if (username && username.trim()) {
+                    this.gameState.myUsername = username.trim();
+                    GM_setValue('my_username', username.trim());
+                    console.log('手動でユーザー名設定:', username.trim());
+                    this.updateCounterDisplay();
+                }
+            }
+        }
+
+        // ユーザー名変更
+        changeUsername() {
+            const username = prompt('新しいユーザー名を入力してください:', this.gameState.myUsername);
             if (username && username.trim()) {
                 this.gameState.myUsername = username.trim();
                 GM_setValue('my_username', username.trim());
-                console.log('手動でユーザー名設定:', username.trim());
+                console.log('ユーザー名変更:', username.trim());
                 this.updateCounterDisplay();
+                
+                // 追跡中の場合は履歴を更新
+                if (this.gameState.isTracking) {
+                    this.refreshHistory();
+                }
             }
         }
 
